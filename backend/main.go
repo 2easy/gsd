@@ -73,7 +73,7 @@ func main() {
 		var contentType string
 		switch ext {
 		case ".js":
-			contentType = "application/javascript"
+			contentType = "text/javascript"
 		case ".css":
 			contentType = "text/css"
 		case ".html":
