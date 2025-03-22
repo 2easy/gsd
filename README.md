@@ -12,9 +12,9 @@ docker pull ghcr.io/2easy/gsd:latest
 # Replace /path/to/data with your desired path to store the database
 # Replace 8080 with your desired port
 docker run -d \
-  -p 8080:8080 \
+  -p 8081:8081 \
   -v /path/to/data:/data \
-  -e GSD_PORT=8080 \
+  -e GSD_PORT=8081 \
   -e GSD_DB_PATH=/data/gsd.db \
   ghcr.io/2easy/gsd:latest
 ```
