@@ -20,7 +20,7 @@ var embeddedFiles embed.FS
 
 func main() {
 	dbPath := flag.String("db", "./gsd.db", "path to the SQLite database file")
-	port := flag.String("port", "8080", "port to run the server on")
+	port := flag.String("port", "8081", "port to run the server on")
 	flag.Parse()
 
 	InitDB(*dbPath)    // Initialize SQLite database

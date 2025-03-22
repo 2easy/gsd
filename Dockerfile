@@ -18,7 +18,7 @@ RUN apk --no-cache add ca-certificates
 WORKDIR /app
 COPY --from=backend-builder /app/gsd .
 VOLUME /data
-EXPOSE 8080
+EXPOSE 8081
 
 # Set default arguments that can be overridden at runtime
-ENTRYPOINT ["/app/gsd", "--port", "8080", "--db", "/data/gsd.db"]
+ENTRYPOINT ["/app/gsd", "--port", "8081", "--db", "/data/gsd.db"]

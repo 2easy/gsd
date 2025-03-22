@@ -10,7 +10,7 @@ docker pull ghcr.io/2easy/gsd:latest
 
 # Run the container
 # Replace /path/to/data with your desired path to store the database
-# Replace 8080 with your desired port
+# Replace 8081 with your desired port
 docker run -d \
   -p 8081:8081 \
   -v /path/to/data:/data \
@@ -19,13 +19,13 @@ docker run -d \
   --db /data/gsd.db
 ```
 
-The application will be available at http://localhost:8080 (or your specified port).
+The application will be available at http://localhost:8081 (or your specified port).
 
 ### Configuration
 
 The application accepts the following command line flags:
 
-- `--port`: HTTP server port (default: 8080)
+- `--port`: HTTP server port (default: 8081)
 - `--db`: Path to the SQLite database file (default: ./gsd.db)
 
 ### Building locally
