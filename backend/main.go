@@ -6,6 +6,7 @@ import (
 	"log"
 	"mime"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -17,7 +18,15 @@ import (
 //go:embed dist/*
 var embeddedFiles embed.FS
 
+func getEnv(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
+}
+
 func main() {
+	port := getEnv("GSD_PORT", "8080")
 	InitDB() // Initialize SQLite database
 
 	r := gin.Default() // Includes Logger and Recovery middleware
@@ -84,6 +93,6 @@ func main() {
 		c.Data(http.StatusOK, contentType, content)
 	})
 
-	fmt.Println("Server running on http://localhost:8081")
-	log.Fatal(r.Run(":8081"))
+	fmt.Printf("Server running on http://localhost:%s\n", port)
+	log.Fatal(r.Run(":" + port))
 }
