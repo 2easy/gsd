@@ -29,11 +29,6 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Set up Go
-      uses: actions/setup-go@v5
-      with:
-        go-version: '1.24'
-
     - name: Set up Node.js
       uses: actions/setup-node@v4
       with:
@@ -52,28 +47,6 @@ jobs:
         rm -rf backend/dist
         mv frontend/dist backend/dist
 
-    - name: Build for darwin/arm64
-      run: |
-        echo "Building for darwin/arm64..."
-        CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 go build -o "dist/gsd-darwin-arm64" ./backend
-
-    - name: Test backend
-      run: cd backend && go test ./...
-
-    - name: Create release archives
-      run: |
-        mkdir -p releases
-        cd dist
-        for file in *; do
-          zip "../releases/${file%.exe}.zip" "$file" "../README.md" "../LICENSE"
-        done
-
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: gsd-releases
-        path: releases/*.zip
-
     - name: Get current date
       id: date
       run: echo "date=$(date +'%Y-%m-%d-%H-%M')" >> $GITHUB_OUTPUT
@@ -86,16 +59,3 @@ jobs:
         tags: |
           ghcr.io/${{ github.repository }}:latest
           ghcr.io/${{ github.repository }}:${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || steps.date.outputs.date }}
-
-    - name: Create Release
-      if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
-      uses: softprops/action-gh-release@v1
-      with:
-        files: releases/*.zip
-        draft: false
-        prerelease: ${{ !startsWith(github.ref, 'refs/tags/v') }}
-        tag_name: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref || format('build-{0}', steps.date.outputs.date) }}
-        name: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref || format('Build {0}', steps.date.outputs.date) }}
-        generate_release_notes: true
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
