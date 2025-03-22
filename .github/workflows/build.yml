@@ -3,6 +3,8 @@ name: Build and Release
 on:
   push:
     branches: [ main ]
+    tags:
+      - 'v*'
   pull_request:
     branches: [ main ]
 
@@ -36,17 +38,44 @@ jobs:
         rm -rf backend/dist
         mv frontend/dist backend/dist
 
-    - name: Build backend
-      run: cd backend && go build -o ../app
+    - name: Build for all platforms
+      run: |
+        platforms=("windows/amd64" "darwin/amd64" "darwin/arm64" "linux/amd64" "linux/arm64")
+        for platform in "${platforms[@]}"; do
+          os=${platform%/*}
+          arch=${platform#*/}
+          output="gsd-$os-$arch"
+          if [ "$os" = "windows" ]; then
+            output="$output.exe"
+          fi
+          echo "Building for $os/$arch..."
+          GOOS=$os GOARCH=$arch go build -o "dist/$output" ./backend
+        done
 
     - name: Test backend
       run: cd backend && go test ./...
 
-    - name: Upload artifact
+    - name: Create release archives
+      run: |
+        mkdir -p releases
+        cd dist
+        for file in *; do
+          zip "../releases/${file%.exe}.zip" "$file" "../README.md" "../LICENSE"
+        done
+
+    - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: gsd-app
-        path: |
-          app
-          README.md
-          LICENSE
+        name: gsd-releases
+        path: releases/*.zip
+
+    - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/v')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: releases/*.zip
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
