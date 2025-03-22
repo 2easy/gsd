@@ -54,7 +54,7 @@ jobs:
             output="$output.exe"
           fi
           echo "Building for $os/$arch..."
-          GOOS=$os GOARCH=$arch go build -o "dist/$output" ./backend
+          CGO_ENABLED=1 GOOS=$os GOARCH=$arch go build -ldflags='-linkmode external -extldflags "-static"' -o "dist/$output" ./backend
         done
 
     - name: Test backend

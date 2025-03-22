@@ -37,7 +37,7 @@ build-frontend:
 # Build backend
 build-backend: build-frontend
 	@echo "Building Go binary..."
-	cd $(BACKEND_DIR) && go build -o ../$(APP_NAME) ./...
+	cd $(BACKEND_DIR) && CGO_ENABLED=1 go build -o ../$(APP_NAME) ./...
 
 # Run the application
 run: build
