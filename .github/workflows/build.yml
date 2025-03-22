@@ -55,7 +55,7 @@ jobs:
     - name: Build for darwin/arm64
       run: |
         echo "Building for darwin/arm64..."
-        CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 go build -ldflags='-linkmode external -extldflags "-static"' -o "dist/gsd-darwin-arm64" ./backend
+        CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 go build -o "dist/gsd-darwin-arm64" ./backend
 
     - name: Test backend
       run: cd backend && go test ./...
