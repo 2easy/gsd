@@ -11,9 +11,8 @@ import (
 
 var db *sql.DB
 
-func InitDB() {
+func InitDB(dbPath string) {
 	var err error
-	dbPath := getEnv("GSD_DB_PATH", "./gsd.db")
 
 	// Ensure the directory exists
 	if dir := filepath.Dir(dbPath); dir != "." {

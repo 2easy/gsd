@@ -19,6 +19,6 @@ WORKDIR /app
 COPY --from=backend-builder /app/gsd .
 VOLUME /data
 EXPOSE 8080
-ENV GSD_PORT=8080
-ENV GSD_DB_PATH=/data/gsd.db
-ENTRYPOINT ["/app/gsd"]
+
+# Set default arguments that can be overridden at runtime
+ENTRYPOINT ["/app/gsd", "--port", "8080", "--db", "/data/gsd.db"]
