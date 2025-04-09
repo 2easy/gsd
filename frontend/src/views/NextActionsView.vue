@@ -5,6 +5,7 @@ import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import draggable from 'vuedraggable';
+import AgeBadge from '../components/AgeBadge.vue';
 
 interface Project {
   id: string;
@@ -64,7 +65,14 @@ const fetchData = async () => {
     axios.get('/api/next-actions'),
     axios.get('/api/projects')
   ]);
-  nextActions.value = actionsResponse.data;
+  // Validate that all nextActions have a valid created_at field
+  nextActions.value = actionsResponse.data.map(action => {
+    if (!action.created_at) {
+      console.warn('Missing created_at for action:', action);
+      action.created_at = new Date().toISOString(); // Fallback to current timestamp
+    }
+    return action;
+  });
   projects.value = projectsResponse.data;
 };
 
@@ -363,7 +371,7 @@ const toggleSort = (sort: typeof sortBy.value) => {
                             </a>
                             <span v-else>{{ action.action.charAt(0).toUpperCase() + action.action.slice(1) }}</span>
                           </h5>
-                          <span class="badge bg-secondary ms-2" title="Age">{{ calculateAgeDays(action.created_at) }}</span>
+                          <AgeBadge :createdAt="action.created_at" />
                           <button 
                             class="btn btn-link btn-sm p-0 ms-2" 
                             @click="openEditModal(action)"

@@ -11,10 +11,11 @@ import (
 )
 
 type Project struct {
-	ID       string  `json:"id"`
-	Name     string  `json:"name"`
-	Position float64 `json:"position"`
-	Deadline string  `json:"deadline,omitempty"`
+	ID        string  `json:"id"`
+	Name      string  `json:"name"`
+	Position  float64 `json:"position"`
+	CreatedAt string  `json:"created_at"`
+	Deadline  string  `json:"deadline,omitempty"`
 }
 
 // Request body for position update
@@ -47,6 +48,19 @@ type UpdateNextActionRequest struct {
 	Energy      string  `json:"energy,omitempty"`
 	CompletedAt string  `json:"completed_at,omitempty"`
 	Position    float64 `json:"position,omitempty"`
+}
+
+type InboxItem struct {
+	ID          string `json:"id"`
+	Description string `json:"description"`
+	URL         string `json:"url,omitempty"`
+	CreatedAt   string `json:"created_at"`
+}
+
+type UpdateInboxItemRequest struct {
+	Description string `json:"description,omitempty"`
+	URL         string `json:"url,omitempty"`
+	CreatedAt   string `json:"created_at"`
 }
 
 func GetProjects(c *gin.Context) {
@@ -85,6 +99,9 @@ func CreateProject(c *gin.Context) {
 		project.ID = uuid.New().String()
 	}
 
+	// Set creation time
+	project.CreatedAt = time.Now().UTC().Format(time.RFC3339)
+
 	log.Println("Inserting project into database with ID:", project.ID, "and Name:", project.Name)
 
 	// Get max position
@@ -102,8 +119,8 @@ func CreateProject(c *gin.Context) {
 		project.Position = maxPosition.Float64 + 1.0
 	}
 
-	_, err = db.Exec("INSERT INTO projects (id, name, position, deadline) VALUES (?, ?, ?, ?)",
-		project.ID, project.Name, project.Position, project.Deadline)
+	_, err = db.Exec("INSERT INTO projects (id, name, position, deadline, created_at) VALUES (?, ?, ?, ?, ?)",
+		project.ID, project.Name, project.Position, project.Deadline, project.CreatedAt)
 	if err != nil {
 		log.Println("Error inserting into database:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -432,6 +449,76 @@ func DeleteNextAction(c *gin.Context) {
 	}
 	if rowsAffected == 0 {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Next action not found"})
+		return
+	}
+
+	c.Status(http.StatusOK)
+}
+
+func GetInboxItems(c *gin.Context) {
+	rows, err := db.Query("SELECT id, description, url, created_at FROM inbox WHERE state IS NULL")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	defer rows.Close()
+
+	var items []InboxItem
+	for rows.Next() {
+		var item InboxItem
+		if err := rows.Scan(&item.ID, &item.Description, &item.URL, &item.CreatedAt); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		items = append(items, item)
+	}
+
+	if len(items) == 0 {
+		items = []InboxItem{}
+	}
+
+	c.JSON(http.StatusOK, items)
+}
+
+func CreateInboxItem(c *gin.Context) {
+	var item InboxItem
+	if err := c.ShouldBindJSON(&item); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if item.ID == "" {
+		item.ID = uuid.New().String()
+	}
+
+	// Set creation time
+	item.CreatedAt = time.Now().UTC().Format(time.RFC3339)
+
+	_, err := db.Exec("INSERT INTO inbox (id, description, url, created_at) VALUES (?, ?, ?, ?)", item.ID, item.Description, item.URL, item.CreatedAt)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, item)
+}
+
+func DeleteInboxItem(c *gin.Context) {
+	itemID := c.Param("id")
+
+	result, err := db.Exec("UPDATE inbox SET state = 'deleted' WHERE id = ?", itemID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	if rowsAffected == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Inbox item not found"})
 		return
 	}
 

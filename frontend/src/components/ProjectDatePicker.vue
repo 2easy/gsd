@@ -31,7 +31,7 @@ const formatDateForDisplay = (dateStr?: string) => {
   >
     <template #default="{ togglePopover }">
       <button class="btn btn-link" @click="togglePopover">
-        <FontAwesomeIcon :icon="faCalendar" />
+        <FontAwesomeIcon :icon=faCalendar />
         {{ model ? formatDateForDisplay(model) : 'Add deadline' }}
       </button>
     </template>

@@ -37,7 +37,7 @@ run-frontend:
 # Run the backend development server
 run-backend:
 	@echo "Starting the backend Go server..."
-	cd $(BACKEND_DIR) && go run .
+	cd $(BACKEND_DIR) && go run . $(ARGS)
 
 # Run the development servers
 run-dev:

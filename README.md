@@ -35,3 +35,17 @@ To build the Docker image locally:
 ```bash
 docker build -t gsd .
 ```
+
+## Development
+
+Start the backend first
+
+```bash
+make run-backend ARGS="--db ~/.gsd/data/gsd.db"
+```
+
+Then in separate terminal start the frontend
+
+```bash
+make run-frontend
+```

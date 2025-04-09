@@ -27,10 +27,18 @@ func InitDB(dbPath string) {
 	}
 
 	sqlStmt := `
+	CREATE TABLE IF NOT EXISTS inbox (
+		id TEXT PRIMARY KEY,
+		description TEXT NOT NULL,
+		url TEXT,
+		created_at DATETIME NOT NULL,
+		state TEXT CHECK(state IS NULL OR state IN ('deleted'))
+	);
 	CREATE TABLE IF NOT EXISTS projects (
 		id TEXT PRIMARY KEY,
 		name TEXT NOT NULL,
 		position REAL NOT NULL UNIQUE,
+		created_at DATETIME NOT NULL,
 		deadline TEXT
 	);
 	CREATE TABLE IF NOT EXISTS next_actions (

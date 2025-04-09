@@ -38,6 +38,10 @@ func main() {
 		api.POST("/next-actions", CreateNextAction)
 		api.PATCH("next-actions/:id", UpdateNextAction)
 		api.DELETE("next-actions/:id", DeleteNextAction)
+		// Inbox
+		api.GET("/inbox", GetInboxItems)
+		api.POST("/inbox", CreateInboxItem)
+		api.DELETE("/inbox/:id", DeleteInboxItem)
 	}
 
 	// Serve embedded Vue app with proper MIME types

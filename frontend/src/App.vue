@@ -1,5 +1,18 @@
 <script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router'
+import { RouterLink, RouterView } from 'vue-router';
+import { ref, onMounted } from 'vue';
+import axios from 'axios';
+
+const inboxItemCount = ref(0);
+
+onMounted(async () => {
+  try {
+    const response = await axios.get('/api/inbox');
+    inboxItemCount.value = response.data.length;
+  } catch (error) {
+    console.error('Failed to fetch inbox items:', error);
+  }
+});
 </script>
 
 <template>
@@ -17,6 +30,12 @@ import { RouterLink, RouterView } from 'vue-router'
           <li class="nav-item">
             <RouterLink class="nav-link" active-class="active" to="/next-actions">Next Actions</RouterLink>
           </li>
+          <li class="nav-item position-relative">
+            <RouterLink class="nav-link d-flex align-items-center" active-class="active" to="/inbox">
+              Inbox
+              <span v-if="inboxItemCount > 0" class="badge bg-danger ms-2">{{ inboxItemCount }}</span>
+            </RouterLink>
+          </li>
         </ul>
       </div>
     </div>
@@ -30,5 +49,10 @@ import { RouterLink, RouterView } from 'vue-router'
 <style scoped>
 .router-link-active {
   font-weight: bold;
+}
+
+.badge {
+  font-size: 0.75rem;
+  padding: 0.25em 0.5em;
 }
 </style>
