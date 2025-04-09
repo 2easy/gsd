@@ -66,12 +66,12 @@ const fetchData = async () => {
     axios.get('/api/projects')
   ]);
   // Validate that all nextActions have a valid created_at field
-  nextActions.value = actionsResponse.data.map(action => {
+  nextActions.value = actionsResponse.data.map((action: Partial<NextAction>) => {
     if (!action.created_at) {
       console.warn('Missing created_at for action:', action);
       action.created_at = new Date().toISOString(); // Fallback to current timestamp
     }
-    return action;
+    return action as NextAction;
   });
   projects.value = projectsResponse.data;
 };
