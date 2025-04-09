@@ -1,19 +1,17 @@
 <template>
   <div>
     <div class="wizard-header">
-      <h2>Process Inbox Wizard</h2>
-      <div v-if="inboxItems.length > 1" class="paging">
-        <FontAwesomeIcon :icon=faChevronLeft
-          class="page-nav" 
-          @click="currentIndex > 0 && currentIndex--"
-          :class="{ disabled: currentIndex === 0 }"
-        />
-        <span>{{ currentIndex + 1 }}/{{ inboxItems.length }}</span>
-        <FontAwesomeIcon :icon=faChevronRight
-          class="page-nav" 
-          @click="currentIndex < inboxItems.length - 1 && currentIndex++"
-          :class="{ disabled: currentIndex === inboxItems.length - 1 }"
-        />
+      <!-- Progress bar -->
+      <div v-if="inboxItems.length > 0" class="progress mb-3" style="height: 20px;">
+        <div 
+          class="progress-bar bg-success" 
+          role="progressbar" 
+          :style="{ width: `${(currentIndex / inboxItems.length) * 100}%` }"
+          :aria-valuenow="(currentIndex / inboxItems.length) * 100" 
+          aria-valuemin="0" 
+          aria-valuemax="100">
+          {{ currentIndex }} of {{ inboxItems.length }} items processed
+        </div>
       </div>
     </div>
     <div v-if="currentIndex < inboxItems.length">
@@ -40,7 +38,8 @@
           v-if="stage.component"
           :is="stage.component"
           :inbox-item="currentItem"
-          @action-created="handleActionCreated" 
+          @action-created="handleActionCreated"
+          @timer-complete="handleTimerComplete"
         />
       </div>
     </div>
@@ -64,9 +63,8 @@
 
 <script setup lang="ts">
 import { ref, computed, type PropType } from 'vue';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import CreateActionForm from './CreateActionForm.vue';
+import TimerComponent from './TimerComponent.vue';
 import axios from 'axios';
 import { useRouter } from 'vue-router';
 
@@ -109,19 +107,46 @@ const initializeStages = () => [
       {
         label: "Yes",
         nextStage: (answer: string) => ({
-          question: "What is the next action?",
+          question: "Takes less than 2 minutes?",
           options: [
             {
-              label: "Define it",
+              label: "Yes",
               nextStage: (answer: string) => ({
-                question: "Create a new action",
-                options: [],
+                question: "Do it now.",
+                options: [
+                    {
+                        label: "Start Timer"
+                    },
+                    { label: "Done" }
+                ],
+                component: TimerComponent,
                 completed: false,
-                component: CreateActionForm,
               })
             },
-            { label: "Delegate it" },
-            { label: "Defer it" }
+            { 
+              label: "No",
+                nextStage: (answer: string) => ({
+                    question: "Who should do it?",
+                    options: [
+                    {
+                        label: "Me",
+                        nextStage: (answer: string) => ({
+                            question: "Create Action",
+                            component: CreateActionForm,
+                            props: {
+                                inboxItem: currentItem.value,
+                                onActionCreated: () => handleActionCreated(),
+                            },
+                            completed: false,
+                        })
+                    },
+                    { label: "Someone Else" }
+                    ],
+                    completed: false,
+                })
+                
+            },
+
           ],
           completed: false
         })
@@ -203,9 +228,18 @@ const goToNextActions = () => {
   router.push('/next-actions');
 };
 
-function fetchInboxItems() {
-    throw new Error('Function not implemented.');
-}
+const handleTimerComplete = async () => {
+  if (currentItem.value?.id) {
+    try {
+      await axios.delete(`/api/inbox/${currentItem.value.id}`);
+      stages.value = initializeStages();
+      currentIndex.value++;
+    } catch (error) {
+      console.error('Error deleting inbox item:', error);
+      alert('Failed to delete inbox item. Please try again.');
+    }
+  }
+};
 </script>
 
 <style scoped>

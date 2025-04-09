@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import InboxView from '../views/InboxView.vue'
-import ProcessItemsView from '@/views/ProcessItemsView.vue'
+import ProcessInboxView from '@/views/ProcessInboxView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -27,9 +27,9 @@ const router = createRouter({
       component: InboxView
     },
     {
-      path: '/process-items',
-      name: 'ProcessItems',
-      component: ProcessItemsView
+      path: '/process-inbox',
+      name: 'ProcessIinbox',
+      component: ProcessInboxView
     }
   ],
 })

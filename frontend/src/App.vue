@@ -3,16 +3,9 @@ import { RouterLink, RouterView } from 'vue-router';
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
 
-const inboxItemCount = ref(0);
+import { useInboxStore } from '@/stores/inbox'
 
-onMounted(async () => {
-  try {
-    const response = await axios.get('/api/inbox');
-    inboxItemCount.value = response.data.length;
-  } catch (error) {
-    console.error('Failed to fetch inbox items:', error);
-  }
-});
+const inboxStore = useInboxStore();
 </script>
 
 <template>
@@ -33,7 +26,7 @@ onMounted(async () => {
           <li class="nav-item position-relative">
             <RouterLink class="nav-link d-flex align-items-center" active-class="active" to="/inbox">
               Inbox
-              <span v-if="inboxItemCount > 0" class="badge bg-danger ms-2">{{ inboxItemCount }}</span>
+              <span v-if="inboxStore.inboxItemCount > 0" class="badge bg-danger ms-2">{{ inboxStore.inboxItemCount }}</span>
             </RouterLink>
           </li>
         </ul>

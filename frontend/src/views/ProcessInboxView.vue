@@ -27,7 +27,6 @@ const fetchInboxItems = async () => {
 
 onMounted(fetchInboxItems);
 
-
 </script>
 
 <style scoped>
