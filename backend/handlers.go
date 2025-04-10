@@ -500,6 +500,11 @@ func CreateInboxItem(c *gin.Context) {
 		return
 	}
 
+	manager.BroadcastUpdate(map[string]any{
+		"type": "inbox_item_created",
+		"data": item,
+	})
+
 	c.JSON(http.StatusOK, item)
 }
 

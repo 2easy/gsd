@@ -1,11 +1,18 @@
 <script setup lang="ts">
+import { onMounted, onUnmounted } from 'vue'
 import { RouterLink, RouterView } from 'vue-router';
-import { ref, onMounted } from 'vue';
-import axios from 'axios';
 
 import { useInboxStore } from '@/stores/inbox'
 
 const inboxStore = useInboxStore();
+
+onMounted(() => {
+  inboxStore.initWebSocket()
+})
+
+onUnmounted(() => {
+  inboxStore.closeWebSocket()
+})
 </script>
 
 <template>

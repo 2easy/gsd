@@ -11,7 +11,16 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 )
+
+// Initialize websocket manager
+var manager = &ClientManager{
+	clients:    make(map[*websocket.Conn]bool),
+	broadcast:  make(chan []byte),
+	register:   make(chan *websocket.Conn),
+	unregister: make(chan *websocket.Conn),
+}
 
 // Embed frontend files
 //
@@ -42,6 +51,9 @@ func main() {
 		api.GET("/inbox", GetInboxItems)
 		api.POST("/inbox", CreateInboxItem)
 		api.DELETE("/inbox/:id", DeleteInboxItem)
+
+		// WebSocket
+		api.GET("/ws", manager.HandleWebSocket)
 	}
 
 	// Serve embedded Vue app with proper MIME types
@@ -91,6 +103,9 @@ func main() {
 		c.Header("Content-Type", contentType)
 		c.Data(http.StatusOK, contentType, content)
 	})
+
+	// Start websocket manager in a goroutine
+	go manager.Run()
 
 	fmt.Printf("Server running on http://localhost:%s\n", *port)
 	log.Fatal(r.Run(":" + *port))
