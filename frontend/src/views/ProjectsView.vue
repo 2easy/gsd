@@ -338,4 +338,22 @@ const updateProjectDeadline = async (date: string | null | undefined, project: P
 .project-title:hover {
   color: #0b5ed7;
 }
+
+.form-control {
+  background-color: var(--bs-body-bg);
+  border-color: var(--bs-border-color);
+  color: var(--bs-body-color);
+}
+
+.form-control:focus {
+  background-color: var(--bs-body-bg);
+  border-color: var(--bs-primary);
+  color: var(--bs-body-color);
+  box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+}
+
+.badge {
+  font-size: 0.75rem;
+  padding: 0.25em 0.5em;
+}
 </style>

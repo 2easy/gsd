@@ -290,49 +290,60 @@ const toggleSort = (sort: typeof sortBy.value) => {
 <template>
   <div class="container py-4">
     <header class="pb-3 mb-4 border-bottom">
-      <h1 class="display-4 fw-bold text-center text-danger">Next Actions</h1>
+      <h1 class="display-4 fw-bold text-center text-primary">Next Actions</h1>
     </header>
 
     <main>
       <div class="row">
         <div class="col-md-10 mx-auto">
           <div class="d-flex justify-content-between align-items-center mb-3">
-            <div class="input-group" style="max-width: 70%;">
-              <input
-                v-model="newActionText"
-                type="text"
-                class="form-control"
-                placeholder="Add a next action"
+            <div class="input-group" style="max-width: 50%;">
+              <input 
+                v-model="newActionText" 
+                type="text" 
+                class="form-control" 
+                placeholder="New action" 
                 aria-label="New action"
                 @keypress="handleKeyPress"
               />
             </div>
 
-            <div class="btn-group me-2">
-              <button
-                v-for="f in ['all', 'active', 'completed'] as const"
-                :key="f"
-                class="btn"
-                :class="filterBy === f ? 'btn-primary' : 'btn-outline-primary'"
-                @click="filterBy = f"
-              >
-                {{ f.charAt(0).toUpperCase() + f.slice(1) }}
-              </button>
-            </div>
+            <div class="d-flex align-items-center gap-3">
+              <div class="btn-group me-2">
+                <button 
+                  class="btn position-relative"
+                  :class="[
+                    filterBy === 'completed' ? 'btn-success' : 'btn-outline-success',
+                  ]"
+                  @click="filterBy = filterBy === 'completed' ? 'all' : 'completed'"
+                >
+                  {{ filterBy === 'completed' ? 'Show All' : 'Show Completed' }}
+                </button>
+              </div>
 
-            <div class="btn-group">
-              <button
-                v-for="s in ['position', 'energy', 'size'] as const"
-                :key="s"
-                class="btn"
-                :class="sortBy === s ? 'btn-danger' : 'btn-outline-danger'"
-                @click="toggleSort(s)"
-              >
-                {{ s.charAt(0).toUpperCase() + s.slice(1) }}
-                <span v-if="sortBy === s">
-                  {{ sortDirection === 'asc' ? '↑' : '↓' }}
-                </span>
-              </button>
+              <div class="btn-group">
+                <button 
+                  class="btn"
+                  :class="sortBy === 'position' ? 'btn-primary' : 'btn-outline-primary'"
+                  @click="sortBy = 'position'"
+                >
+                  Position
+                </button>
+                <button 
+                  class="btn"
+                  :class="sortBy === 'energy' ? 'btn-primary' : 'btn-outline-primary'"
+                  @click="sortBy = 'energy'"
+                >
+                  Energy
+                </button>
+                <button 
+                  class="btn"
+                  :class="sortBy === 'size' ? 'btn-primary' : 'btn-outline-primary'"
+                  @click="sortBy = 'size'"
+                >
+                  Size
+                </button>
+              </div>
             </div>
           </div>
 
@@ -437,7 +448,7 @@ const toggleSort = (sort: typeof sortBy.value) => {
     </main>
 
     <!-- Edit Modal -->
-    <div v-if="editingAction" class="modal d-block" tabindex="-1">
+    <div v-if="editingAction" class="modal fade show" style="display: block;" tabindex="-1">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
@@ -445,14 +456,16 @@ const toggleSort = (sort: typeof sortBy.value) => {
             <button type="button" class="btn-close" @click="editingAction = null"></button>
           </div>
           <div class="modal-body">
-            <div class="mb-3">
-              <label class="form-label">Action</label>
-              <input type="text" class="form-control" v-model="editForm.action">
-            </div>
-            <div class="mb-3">
-              <label class="form-label">URL (optional)</label>
-              <input type="url" class="form-control" v-model="editForm.url" placeholder="https://...">
-            </div>
+            <form @submit.prevent="saveEdit">
+              <div class="mb-3">
+                <label class="form-label">Action</label>
+                <input type="text" class="form-control" v-model="editForm.action">
+              </div>
+              <div class="mb-3">
+                <label class="form-label">URL (optional)</label>
+                <input type="url" class="form-control" v-model="editForm.url" placeholder="https://...">
+              </div>
+            </form>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" @click="editingAction = null">Cancel</button>
@@ -460,8 +473,8 @@ const toggleSort = (sort: typeof sortBy.value) => {
           </div>
         </div>
       </div>
-      <div class="modal-backdrop fade show"></div>
     </div>
+    <div v-if="editingAction" class="modal-backdrop fade show"></div>
   </div>
 </template>
 
@@ -526,5 +539,35 @@ const toggleSort = (sort: typeof sortBy.value) => {
 .completed-action {
   text-decoration: line-through;
   opacity: 0.6;
+}
+
+.form-control, .form-select {
+  background-color: var(--bs-body-bg);
+  border-color: var(--bs-border-color);
+  color: var(--bs-body-color);
+}
+
+.form-control:focus, .form-select:focus {
+  background-color: var(--bs-body-bg);
+  border-color: var(--bs-primary);
+  color: var(--bs-body-color);
+  box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+}
+
+.modal-content {
+  background-color: var(--bs-body-bg);
+  border-color: var(--bs-border-color);
+}
+
+.modal-header {
+  border-bottom-color: var(--bs-border-color);
+}
+
+.modal-footer {
+  border-top-color: var(--bs-border-color);
+}
+
+.btn-close {
+  filter: var(--bs-btn-close-white-filter);
 }
 </style>

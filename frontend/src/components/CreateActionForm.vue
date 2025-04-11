@@ -8,11 +8,24 @@
         <form @submit.prevent="submitAction">
           <div class="mb-3">
             <label for="actionText" class="form-label">Action:</label>
-            <input type="text" class="form-control" id="actionText" v-model="actionText" required />
+            <input 
+              type="text" 
+              class="form-control" 
+              id="actionText" 
+              v-model="actionText" 
+              required 
+              :placeholder="inboxItem?.description || 'Enter action description'"
+            />
           </div>
           <div class="mb-3">
             <label for="url" class="form-label">URL:</label>
-            <input type="url" class="form-control" id="url" v-model="url" />
+            <input 
+              type="url" 
+              class="form-control" 
+              id="url" 
+              v-model="url" 
+              :placeholder="inboxItem?.url || 'https://...'"
+            />
           </div>
           <div class="mb-3">
             <label for="size" class="form-label">Size:</label>
@@ -31,7 +44,9 @@
               <option value="high">High</option>
             </select>
           </div>
-          <button type="submit" class="btn btn-primary">Save Action</button>
+          <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary">Save Action</button>
+          </div>
         </form>
       </div>
     </div>
@@ -81,5 +96,26 @@ const submitAction = async () => {
 </script>
 
 <style scoped>
-/* Remove custom styles since we're using Bootstrap classes */
+.card {
+  background-color: var(--bs-card-bg);
+  border-color: var(--bs-border-color);
+}
+
+.card-header {
+  background-color: var(--bs-card-cap-bg);
+  border-bottom-color: var(--bs-border-color);
+}
+
+.form-control, .form-select {
+  background-color: var(--bs-body-bg);
+  border-color: var(--bs-border-color);
+  color: var(--bs-body-color);
+}
+
+.form-control:focus, .form-select:focus {
+  background-color: var(--bs-body-bg);
+  border-color: var(--bs-primary);
+  color: var(--bs-body-color);
+  box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+}
 </style>

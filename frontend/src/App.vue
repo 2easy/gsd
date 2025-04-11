@@ -3,16 +3,19 @@ import { onMounted, onUnmounted } from 'vue'
 import { RouterLink, RouterView } from 'vue-router';
 
 import { useInboxStore } from '@/stores/inbox'
+import { useThemeStore } from '@/stores/theme'
 
 const inboxStore = useInboxStore();
+const themeStore = useThemeStore();
 
 onMounted(() => {
-  inboxStore.initWebSocket()
-})
+  inboxStore.initWebSocket();
+  themeStore.initTheme();
+});
 
 onUnmounted(() => {
-  inboxStore.closeWebSocket()
-})
+  inboxStore.closeWebSocket();
+});
 </script>
 
 <template>
@@ -37,6 +40,11 @@ onUnmounted(() => {
             </RouterLink>
           </li>
         </ul>
+        <div class="ms-auto">
+          <button class="btn btn-link nav-link" @click="themeStore.toggleTheme">
+            <i :class="themeStore.theme === 'light' ? 'bi bi-moon-fill' : 'bi bi-sun-fill'"></i>
+          </button>
+        </div>
       </div>
     </div>
   </nav>
@@ -54,5 +62,14 @@ onUnmounted(() => {
 .badge {
   font-size: 0.75rem;
   padding: 0.25em 0.5em;
+}
+
+.btn-link {
+  color: var(--bs-navbar-color);
+  text-decoration: none;
+}
+
+.btn-link:hover {
+  color: var(--bs-navbar-hover-color);
 }
 </style>

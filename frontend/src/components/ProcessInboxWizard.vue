@@ -246,9 +246,9 @@ const handleTimerComplete = async () => {
 .stage {
   margin-bottom: 1rem;
   padding: 1rem;
-  border: 1px solid #ddd;
+  border: 1px solid var(--bs-border-color);
   border-radius: 0.5rem;
-  background-color: #f9f9f9;
+  background-color: var(--bs-body-bg);
 }
 
 .stage-content {
@@ -260,35 +260,35 @@ button {
   padding: 0.5rem 1rem;
   border: 2px solid transparent;
   border-radius: 0.25rem;
-  background-color: #007bff;
-  color: white;
+  background-color: var(--bs-primary);
+  color: var(--bs-white);
   cursor: pointer;
-  transition: background-color 0.3s ease, border-color 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 button.selected {
-  background-color: #0056b3;
-  border-color: #0056b3;
+  background-color: var(--bs-primary);
+  border-color: var(--bs-primary);
 }
 
 button:not(.selected) {
-  background-color: white;
-  color: #007bff;
-  border-color: #007bff;
+  background-color: var(--bs-body-bg);
+  color: var(--bs-primary);
+  border-color: var(--bs-primary);
 }
 
 button:hover {
-  background-color: #0056b3;
-  color: white;
-  border-color: #0056b3;
+  background-color: var(--bs-primary);
+  color: var(--bs-white);
+  border-color: var(--bs-primary);
 }
 
 .inbox-item-details {
   margin-bottom: 1rem;
   padding: 0.5rem;
-  border: 1px solid #ddd;
+  border: 1px solid var(--bs-border-color);
   border-radius: 0.25rem;
-  background-color: #f1f1f1;
+  background-color: var(--bs-body-tertiary-bg);
 }
 
 .inbox-item-details p {
@@ -296,7 +296,7 @@ button:hover {
 }
 
 .inbox-item-details a {
-  color: #007bff;
+  color: var(--bs-link-color);
   text-decoration: none;
 }
 
@@ -341,15 +341,10 @@ button:hover {
 
 .empty-state .btn {
   min-width: 160px;
+  transition: transform 0.2s ease;
 }
 
-/* Override default button styles in empty state */
-.empty-state button {
-  margin: 0;
-  transition: all 0.2s ease;
-}
-
-.empty-state button:hover {
+.empty-state .btn:hover {
   transform: translateY(-1px);
 }
 </style>

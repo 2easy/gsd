@@ -4,6 +4,9 @@ import 'v-calendar/style.css';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { faCalendar } from '@fortawesome/free-regular-svg-icons';
 import { ref } from 'vue';
+import { useThemeStore } from '@/stores/theme';
+
+const themeStore = useThemeStore();
 
 const model = defineModel<string | null>();
 const emit = defineEmits<{
@@ -28,6 +31,7 @@ const formatDateForDisplay = (dateStr?: string) => {
     :masks="{
       modelValue: 'YYYY-MM-DD',
     }"
+    :is-dark="themeStore.theme === 'dark'"
   >
     <template #default="{ togglePopover }">
       <button class="btn btn-link" @click="togglePopover">

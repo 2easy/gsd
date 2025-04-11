@@ -97,17 +97,18 @@ onUnmounted(() => {
   gap: 1rem;
   padding: 1rem;
   border-radius: 0.5rem;
-  background-color: #f8f9fa;
+  background-color: var(--bs-dark);
 }
 
 .timer-display {
   font-size: 2rem;
   font-weight: bold;
   font-family: monospace;
+  color: var(--bs-dark-text);
 }
 
 .time-low {
-  color: #dc3545;
+  color: var(--bs-danger);
   animation: pulse 1s infinite;
 }
 
