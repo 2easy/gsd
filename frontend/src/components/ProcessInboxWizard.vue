@@ -40,6 +40,7 @@
           :inbox-item="currentItem"
           @action-created="handleActionCreated"
           @timer-complete="handleTimerComplete"
+          @move-to-next-item="handleMoveToNextItem"
         />
       </div>
     </div>
@@ -113,12 +114,8 @@ const initializeStages = () => [
               label: "Yes",
               nextStage: (answer: string) => ({
                 question: "Do it now.",
-                options: [
-                    {
-                        label: "Start Timer"
-                    },
-                    { label: "Done" }
-                ],
+                // Only timer controls; remove stage-level option buttons
+                options: [],
                 component: TimerComponent,
                 completed: false,
               })
@@ -180,6 +177,34 @@ const handleAnswer = async (stageIndex: number, option: Option) => {
   stage.completed = true;
   stage.answer = option.label;
 
+  // After timer completion, ask if the task was completed
+  if (stage.question === "Did you complete the task?") {
+    if (option.label === "Yes") {
+      // User completed the task, remove it and proceed to next item
+      try {
+        await axios.delete(`/api/inbox/${currentItem.value.id}`);
+        stages.value = initializeStages();
+        currentIndex.value++;
+      } catch (error) {
+        console.error('Error deleting inbox item:', error);
+        alert('Failed to delete inbox item. Please try again.');
+      }
+    } else {
+      // User did not complete the task, ask to create a next action
+      stages.value.push({
+        question: "Create Action",
+        component: CreateActionForm,
+        props: {
+          inboxItem: currentItem.value,
+          onActionCreated: () => handleActionCreated(),
+        },
+        completed: false,
+        options: [],
+      });
+    }
+    return;
+  }
+
   if (option.label === "Trash it") {
     try {
       // Send delete request to the backend server
@@ -228,7 +253,19 @@ const goToNextActions = () => {
   router.push('/next-actions');
 };
 
-const handleTimerComplete = async () => {
+const handleTimerComplete = () => {
+  // After timer finishes, ask user if the task was completed
+  stages.value.push({
+    question: "Did you complete the task?",
+    options: [
+      { label: "Yes" },
+      { label: "No" },
+    ],
+    completed: false,
+  });
+};
+
+const handleMoveToNextItem = async () => {
   if (currentItem.value?.id) {
     try {
       await axios.delete(`/api/inbox/${currentItem.value.id}`);

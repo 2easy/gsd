@@ -4,21 +4,16 @@
       {{ formatTime(timeLeft) }}
     </div>
     <div class="timer-controls">
-      <button v-if="!isRunning" @click="startTimer" class="btn btn-primary">
-        Start Timer
-      </button>
-      <button v-else @click="stopTimer" class="btn btn-danger">
-        Stop Timer
-      </button>
-      <button @click="resetTimer" class="btn btn-secondary ms-2" :disabled="isRunning">
-        Reset
+      <!-- Hide all buttons when timer has finished -->
+      <button v-if="isRunning" @click="handleDone" class="btn btn-success">
+        Done
       </button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onUnmounted } from 'vue';
+import { ref, onUnmounted, onMounted } from 'vue';
 
 const props = defineProps({
   duration: {
@@ -27,7 +22,7 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['timerComplete']);
+const emit = defineEmits(['timerComplete', 'moveToNextItem']);
 
 const timeLeft = ref(props.duration);
 const isRunning = ref(false);
@@ -80,6 +75,16 @@ function showNotification() {
     });
   }
 }
+
+function handleDone() {
+  stopTimer();
+  emit('moveToNextItem');
+}
+
+// Start timer automatically when component is mounted
+onMounted(() => {
+  startTimer();
+});
 
 // Clean up on component unmount
 onUnmounted(() => {
