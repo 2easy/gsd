@@ -1,87 +1,21 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted } from 'vue';
 import { onBeforeRouteUpdate, type RouteLocationNormalized } from 'vue-router';
-import axios from 'axios';
-import { v4 as uuidv4 } from 'uuid';
-import 'bootstrap/dist/css/bootstrap.min.css';
 import draggable from 'vuedraggable';
 import AgeBadge from '../components/AgeBadge.vue';
+import { useNextActionsStore, type NextAction } from '../stores/nextActions';
 
-interface Project {
-  id: string;
-  name: string;
-  position: number;
-  deadline?: string;
-}
-
-interface NextAction {
-  id: string;
-  action: string;
-  project_id?: string;
-  url?: string;
-  size?: 'small' | 'medium' | 'big';
-  energy?: 'high' | 'low';
-  created_at: string;
-  completed_at?: string;
-  position: number;
-}
-
-const nextActions = ref<NextAction[]>([]);
-const projects = ref<Project[]>([]);
+const store = useNextActionsStore();
 const newActionText = ref('');
-const filterBy = ref<'all' | 'active' | 'completed'>('active');
-const sortBy = ref<'position' | 'energy' | 'size'>('position');
-const sortDirection = ref<'asc' | 'desc'>('asc');
+const editingAction = ref<NextAction | null>(null);
+const editForm = ref({ action: '', url: '' });
 
-const sortedActions = computed(() => {
-  let filtered = nextActions.value.filter(action => {
-    if (filterBy.value === 'active') return !action.completed_at;
-    if (filterBy.value === 'completed') return !!action.completed_at;
-    return true;
-  });
-
-  return filtered.sort((a, b) => {
-    let comparison = 0;
-    if (sortBy.value === 'position') {
-      comparison = (a.position || 0) - (b.position || 0);
-    } else if (sortBy.value === 'energy') {
-      if (!a.energy && !b.energy) comparison = 0;
-      else if (!a.energy) comparison = 1;
-      else if (!b.energy) comparison = -1;
-      else comparison = a.energy === 'high' ? -1 : 1;
-    } else if (sortBy.value === 'size') {
-      const sizeOrder = { small: 1, medium: 2, big: 3 };
-      if (!a.size && !b.size) comparison = 0;
-      else if (!a.size) comparison = 1;
-      else if (!b.size) comparison = -1;
-      else comparison = (sizeOrder[a.size] || 0) - (sizeOrder[b.size] || 0);
-    }
-    return sortDirection.value === 'asc' ? comparison : -comparison;
-  });
-});
-
-const fetchData = async () => {
-  const [actionsResponse, projectsResponse] = await Promise.all([
-    axios.get('/api/next-actions'),
-    axios.get('/api/projects')
-  ]);
-  // Validate that all nextActions have a valid created_at field
-  nextActions.value = actionsResponse.data.map((action: Partial<NextAction>) => {
-    if (!action.created_at) {
-      console.warn('Missing created_at for action:', action);
-      action.created_at = new Date().toISOString(); // Fallback to current timestamp
-    }
-    return action as NextAction;
-  });
-  projects.value = projectsResponse.data;
-};
-
-onMounted(fetchData);
+onMounted(store.fetchData);
 
 // Add navigation hook to refresh data when route is updated
 onBeforeRouteUpdate(async (to: RouteLocationNormalized) => {
   if (to.path === '/next-actions') {
-    await fetchData();
+    await store.fetchData();
   }
 });
 
@@ -93,143 +27,25 @@ const handleKeyPress = (event: KeyboardEvent) => {
 
 const addNextAction = async () => {
   if (newActionText.value.trim() === '') return;
-
-  const maxPosition = Math.max(0, ...nextActions.value.map(a => a.position || 0));
-  const newAction: Partial<NextAction> = {
-    id: uuidv4(),
-    action: newActionText.value,
-    position: maxPosition + 1,
-    created_at: new Date().toISOString(),
-    completed_at: undefined
-  };
-
-  const response = await axios.post('/api/next-actions', newAction);
-  nextActions.value.push(response.data);
+  await store.addNextAction(newActionText.value);
   newActionText.value = '';
 };
 
-const updateActionPosition = async (event: any) => {
-  if (sortBy.value !== 'position') return;
-
-  const movedAction = sortedActions.value[event.newIndex];
-  const prevAction = event.newIndex > 0 ? sortedActions.value[event.newIndex - 1] : null;
-  const nextAction = event.newIndex < sortedActions.value.length - 1 ? sortedActions.value[event.newIndex + 1] : null;
-
-  let newPosition;
-  if (!prevAction) {
-    // If it's at the start
-    newPosition = nextAction ? nextAction.position / 2 : 1;
-  } else if (!nextAction) {
-    // If it's at the end
-    newPosition = prevAction.position + 1;
-  } else {
-    // If it's in between
-    newPosition = (prevAction.position + nextAction.position) / 2;
-  }
-
-  // If sorting in descending order, we need to invert the position
-  if (sortDirection.value === 'desc') {
-    const maxPosition = Math.max(...nextActions.value.map(a => a.position || 0));
-    newPosition = maxPosition - newPosition + 1;
-  }
-
-  try {
-    await axios.patch(`/api/next-actions/${movedAction.id}`, {
-      position: newPosition
-    });
-    const index = nextActions.value.findIndex(a => a.id === movedAction.id);
-    if (index !== -1) {
-      nextActions.value[index].position = newPosition;
-    }
-  } catch (error) {
-    console.error('Failed to update action position:', error);
-  }
-};
-
 const handleChange = async (event: any) => {
-  if (sortBy.value !== 'position') return;
+  if (store.sortBy !== 'position') return;
   
   if (event.moved) {
     const { newIndex } = event.moved;
-    const movedAction = sortedActions.value[newIndex];
-    const prevAction = newIndex > 0 ? sortedActions.value[newIndex - 1] : null;
-    const nextAction = newIndex < sortedActions.value.length - 1 ? sortedActions.value[newIndex + 1] : null;
-
-    let newPosition;
-    if (!prevAction) {
-      newPosition = nextAction ? nextAction.position / 2 : 1;
-    } else if (!nextAction) {
-      newPosition = prevAction.position + 1;
-    } else {
-      newPosition = (prevAction.position + nextAction.position) / 2;
-    }
-
-    try {
-      const response = await axios.patch(`/api/next-actions/${movedAction.id}`, {
-        position: newPosition
-      });
-      const index = nextActions.value.findIndex(a => a.id === movedAction.id);
-      if (index !== -1) {
-        nextActions.value[index] = response.data;
-      }
-    } catch (error) {
-      console.error('Failed to update action position:', error);
-    }
+    const movedAction = store.sortedActions[newIndex];
+    await store.updateActionPosition(movedAction, newIndex);
   }
 };
 
-const toggleComplete = async (action: NextAction) => {
-  try {
-    const response = await axios.patch(`/api/next-actions/${action.id}`, {
-      completed_at: action.completed_at ? null : new Date().toISOString()
-    });
-    
-    // Update with the returned action data
-    const index = nextActions.value.findIndex(a => a.id === action.id);
-    if (index !== -1) {
-      nextActions.value[index] = response.data;
-    }
-  } catch (error) {
-    console.error('Failed to toggle completion:', error);
-  }
-};
-
-const updateActionField = async (action: NextAction, field: keyof NextAction, value: any) => {
-  try {
-    const response = await axios.patch(`/api/next-actions/${action.id}`, {
-      [field]: value
-    });
-    const index = nextActions.value.findIndex(a => a.id === action.id);
-    if (index !== -1) {
-      nextActions.value[index] = response.data;
-    }
-  } catch (error) {
-    console.error(`Failed to update ${field}:`, error);
-  }
-};
-
-const deleteAction = async (actionId: string) => {
-  try {
-    await axios.delete(`/api/next-actions/${actionId}`);
-    nextActions.value = nextActions.value.filter(a => a.id !== actionId);
-  } catch (error) {
-    console.error('Failed to delete action:', error);
-  }
-};
-
-const getProjectName = (projectId: string) => {
-  const project = projects.value.find(p => p.id === projectId);
-  return project?.name || '';
-};
-
-const handleInputChange = (event: Event, action: NextAction, field: keyof NextAction) => {
+const handleInputChange = (event: Event, action: NextAction, field: 'project_id' | 'size' | 'energy') => {
   const target = event.target as HTMLInputElement | HTMLSelectElement;
   const value = target.value || undefined;
-  updateActionField(action, field, value);
+  store.updateActionField(action, field, value);
 };
-
-const editingAction = ref<NextAction | null>(null);
-const editForm = ref({ action: '', url: '' });
 
 const openEditModal = (action: NextAction) => {
   editingAction.value = action;
@@ -248,41 +64,14 @@ const saveEdit = async () => {
   }
   
   try {
-    const response = await axios.patch(`/api/next-actions/${editingAction.value.id}`, {
-      action: editForm.value.action.trim(),
-      url: editForm.value.url.trim() || undefined
-    });
-    
-    const index = nextActions.value.findIndex(a => a.id === editingAction.value?.id);
-    if (index !== -1) {
-      nextActions.value[index] = response.data;
+    await store.updateActionField(editingAction.value, 'action', editForm.value.action.trim());
+    if (editForm.value.url) {
+      await store.updateActionField(editingAction.value, 'url', editForm.value.url.trim());
     }
-    editingAction.value = null; // Close modal only after successful save
+    editingAction.value = null;
   } catch (error) {
     console.error('Failed to update action:', error);
     alert('Failed to save changes. Please try again.');
-  }
-};
-
-const calculateAgeDays = (created_at: string): string => {
-  const created = new Date(created_at);
-  const now = new Date();
-  const diffMs = now.getTime() - created.getTime();
-  const diffDays = diffMs / (1000 * 60 * 60 * 24);
-  const roundedDays = Math.round(diffDays * 2) / 2; // Round to nearest 0.5
-  return roundedDays === 1 ? '1 day' : `${roundedDays} days`;
-};
-
-const toggleSort = (sort: typeof sortBy.value) => {
-  if (sortBy.value === sort) {
-    // Toggle direction if clicking the same sort
-    sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc';
-  } else {
-    // Set default direction for new sort type
-    sortBy.value = sort;
-    if (sort === 'position') sortDirection.value = 'asc';
-    else if (sort === 'energy') sortDirection.value = 'desc';
-    else if (sort === 'size') sortDirection.value = 'asc';
   }
 };
 </script>
@@ -313,33 +102,33 @@ const toggleSort = (sort: typeof sortBy.value) => {
                 <button 
                   class="btn position-relative"
                   :class="[
-                    filterBy === 'completed' ? 'btn-success' : 'btn-outline-success',
+                    store.filterBy === 'completed' ? 'btn-success' : 'btn-outline-success',
                   ]"
-                  @click="filterBy = filterBy === 'completed' ? 'all' : 'completed'"
+                  @click="store.filterBy = store.filterBy === 'completed' ? 'all' : 'completed'"
                 >
-                  {{ filterBy === 'completed' ? 'Show All' : 'Show Completed' }}
+                  {{ store.filterBy === 'completed' ? 'Show All' : 'Show Completed' }}
                 </button>
               </div>
 
               <div class="btn-group">
                 <button 
                   class="btn"
-                  :class="sortBy === 'position' ? 'btn-primary' : 'btn-outline-primary'"
-                  @click="sortBy = 'position'"
+                  :class="store.sortBy === 'position' ? 'btn-primary' : 'btn-outline-primary'"
+                  @click="store.toggleSort('position')"
                 >
                   Position
                 </button>
                 <button 
                   class="btn"
-                  :class="sortBy === 'energy' ? 'btn-primary' : 'btn-outline-primary'"
-                  @click="sortBy = 'energy'"
+                  :class="store.sortBy === 'energy' ? 'btn-primary' : 'btn-outline-primary'"
+                  @click="store.toggleSort('energy')"
                 >
                   Energy
                 </button>
                 <button 
                   class="btn"
-                  :class="sortBy === 'size' ? 'btn-primary' : 'btn-outline-primary'"
-                  @click="sortBy = 'size'"
+                  :class="store.sortBy === 'size' ? 'btn-primary' : 'btn-outline-primary'"
+                  @click="store.toggleSort('size')"
                 >
                   Size
                 </button>
@@ -348,24 +137,24 @@ const toggleSort = (sort: typeof sortBy.value) => {
           </div>
 
           <draggable 
-            :list="sortedActions"
+            :list="store.sortedActions"
             class="list-group mb-4" 
             item-key="id"
             @change="handleChange"
             :animation="200"
-            :disabled="sortBy !== 'position'"
+            :disabled="store.sortBy !== 'position'"
           >
             <template #item="{ element: action }">
               <div class="list-group-item list-group-item-action">
                 <div class="d-flex w-100 justify-content-between align-items-center">
                   <div class="d-flex align-items-center flex-grow-1">
-                    <div class="drag-handle me-3" v-if="sortBy === 'position'">⋮⋮</div>
+                    <div class="drag-handle me-3" v-if="store.sortBy === 'position'">⋮⋮</div>
                     <div class="form-check me-3">
                       <input
                         class="form-check-input"
                         type="checkbox"
                         :checked="!!action.completed_at"
-                        @change="toggleComplete(action)"
+                        @change="store.toggleComplete(action)"
                       >
                     </div>
                     <div class="d-flex flex-column flex-grow-1">
@@ -399,7 +188,7 @@ const toggleSort = (sort: typeof sortBy.value) => {
                             @change="(e) => handleInputChange(e, action, 'project_id')"
                           >
                             <option value="">No Project</option>
-                            <option v-for="project in projects" :key="project.id" :value="project.id">
+                            <option v-for="project in store.projects" :key="project.id" :value="project.id">
                               {{ project.name }}
                             </option>
                           </select>
@@ -430,12 +219,12 @@ const toggleSort = (sort: typeof sortBy.value) => {
                           <button
                             class="btn btn-close"
                             aria-label="Delete action"
-                            @click="deleteAction(action.id)"
+                            @click="store.deleteAction(action.id)"
                           ></button>
                         </div>
                       </div>
                       <div v-if="action.project_id" class="text-muted small">
-                        Project: {{ getProjectName(action.project_id) }}
+                        Project: {{ store.getProjectName(action.project_id) }}
                       </div>
                     </div>
                   </div>
